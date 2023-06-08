@@ -1,13 +1,17 @@
 ---
-title: "Ofav_BW_SCTLD"
-author: "Ana Palacio"
-date: "Feb 10, 2020"
+title: "Ofav BW environmental Co-factors and SCTLD"
+author: "Ana Palacio-Castro"
+date: "`r Sys.Date()`"
 output:
   html_document:
-    fig_height: 3.5
-    fig_width: 3.5
+    code_folding: hide
+    fig_height: 6
+    fig_width: 6
     df_print: paged
     toc: yes
+    toc_float: true
+#bibliography: packages.bib
+#nocite: '@*'
 editor_options:
   chunk_output_type: console
 ---
