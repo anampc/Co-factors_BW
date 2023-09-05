@@ -157,7 +157,7 @@ BW_Trea<- ggplot(Corrected_long[Corrected_long$TP!="T0", ],
   #              date_labels = "%b/%d")+
 BW_Trea 
 
-#ggsave("Outputs/YII_Trea.svg", YII_Trea, width=4, height=3,dpi = 300)
+#ggsave("Outputs/BW_Trea.svg", BW_Trea, width=4, height=3,dpi = 300)
 
 ```
 
@@ -208,3 +208,9 @@ BW_Emm
 write.csv(BW_Emm, "Outputs/BW_Emmeans.csv")
 ```
 
+# Packages used
+
+```{r}
+# Creates bibliography 
+#knitr::write_bib(c(.packages()), "packages.bib")
+```
