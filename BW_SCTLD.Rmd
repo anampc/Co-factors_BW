@@ -58,45 +58,9 @@ Treat_colour<-scale_colour_manual(values =
   CurrentFragments<-read.csv("Metadata/Fragment_Replicate.csv", header = T)
 ```
 
-# Raw data
-
-Data files
-```{r}
-
-# # BW data
-#   Raw_Data<-read.csv("RawData.csv")
-#   n_RunA <- data.frame(table(Raw_Data$Fragment))
-#   colnames(n_RunA)<-c("Fragment","Samples")
-#   
-#   N_Sample_Date<-Raw_Data %>%
-#          group_by(Fragment, Date) %>%
-#          dplyr::summarise(N = n())
-#   N_Sample_Date
-
-```
-
-Re organize the data
-
-```{r}
-# Raw_Data_Wide<-reshape(Raw_Data, idvar="Fragment", timevar = "Time", direction = "wide")
-# 
-# Raw_Data_Wide<-dplyr::left_join(Raw_Data_Wide,CurrentFragments, by ="Fragment")
-# #Raw_Data_2<-dplyr::left_join(Raw_Data,CurrentFragments, by ="Fragment")
-# #Typos<-dplyr::anti_join(Raw_Data, CurrentFragments, by ="Fragment")
-# 
-# Raw_Data_Wide<-dplyr::left_join(Raw_Data_Wide, n_RunA, by="Fragment")
-# Raw_Data_Wide<-left_join(Raw_Data_Wide, Location, by=c("Colony"))
-# 
-# write.csv(Raw_Data_Wide, "Raw_Data_Wide_bleching.csv",
-#           row.names = FALSE)
-# 
-# # Clean working space
-# rm(list = ls())
-```
-
 # Organized data
 
-After data manupulation
+After data manipulation
 
 ```{r}
 
@@ -111,54 +75,136 @@ Corrected_long$N_T<-factor(paste(Corrected_long$Nutrients, Corrected_long$Temp, 
 Corrected_long<-Corrected_long %>% drop_na(Temp, Nutrients)
 Corrected_long$N_T<-factor(Corrected_long$N_T, levels = c("LN_28", "HN_28", "LN_31", "HN_31"))
 
+Corrected_long$Date<-as.Date(Corrected_long$Date)
+
+Corrected_long <- subset(Corrected_long, Corrected_long$Fragment!='A_324')
+Corrected_long <- subset(Corrected_long, Corrected_long$Fragment!='C_513')
+
+
 summary(Corrected_long)
 #Typos<-dplyr::anti_join(Corrected_long, CurrentFragments, by ="Fragment")
 # Corrected_long<-dplyr::left_join(Corrected_long, n_RunB, by ="Fragment")
-# 
-# 
-#     Corrected_long$Date_I<-as.Date(Corrected_long$Date_I, "%m/%d/%y")
-#     Corrected_long$Date_F<-as.Date(Corrected_long$Date_F, "%m/%d/%y")
-#     # Corrected_long$Date_I<-as.Date(Corrected_long$Date_I, "%Y-%m-%d")
-#     # Corrected_long$Date_F<-as.Date(Corrected_long$Date_F, "%Y-%m-%d")
-#     Corrected_long$Days<-(as.numeric(as.Date(Corrected_long$Date_F))-18173)
-#     Corrected_long$Day<-(as.factor(Corrected_long$Days))
-#     Corrected_long$Colony <- paste("P",Corrected_long$Colony, sep = "_" )
-#     Corrected_long$Colony <- as.factor(Corrected_long$Colony)
-#     
-#     Corrected_long$SampleID <- paste(Corrected_long$Colony, Corrected_long$Date_F, sep = "_")
-# 
-# # Remove dead frags
-#   Dying_frags<-filter(Corrected_long, Notes_I=="Almost Dead")
-#   Dying_frags<-select(Dying_frags, Fragment)
-#   Corrected_long<-anti_join(Corrected_long, Dying_frags, by = "Fragment")
-#   str(Corrected_long)
 
 #write.csv(Corrected_long, "Corrected_long3.csv", row.names = FALSE)
 
   
 ```
 
+## Check data 
+
+```{r}
+BW_rep<- ggplot(Corrected_long, aes (Date, Mass..g., colour=factor(Fragment))) +
+  geom_line() + 
+  geom_point()+
+  MyTheme+
+  theme(legend.position = "none")
+BW_rep + facet_grid (Nutrients~Temp) 
+
+BW_rep<- ggplot(Corrected_long, aes (Date, Growth..mg.g.d., colour=factor(Fragment))) +
+  geom_line() + 
+  geom_point()+
+  MyTheme+
+  theme(legend.position = "none")
+BW_rep + facet_grid (Nutrients~Temp) 
+
+
+BW_rep<- ggplot(Corrected_long, aes (Mass..g., Growth..mg.g.d., 
+                                     colour=factor(N_T), 
+                                     shape=Colony)) +
+  geom_point()+ Treat_colour+
+  MyTheme+
+  theme(legend.position = "none")
+BW_rep
+```
+
+
 ## Relative growth
 
 ```{r}
-head(Corrected_long)
-BW<- ggplot(Corrected_long, aes (Genotype, Growth..mg.g.d., colour=factor(N_T))) + 
-  MyTheme + Treat_fill+Treat_colour+
-       stat_summary(fun.data = "mean_cl_boot",geom = "errorbar",
+
+BW<- ggplot(Corrected_long[Corrected_long$TP!="T0", ], 
+            aes (Genotype, Growth..mg.g.d., colour=factor(N_T))) + 
+      MyTheme + Treat_fill+Treat_colour+
+      stat_summary(fun.data = "mean_cl_boot",geom = "errorbar",
                width = 0.2, position=position_dodge(width=0.2))+
-        stat_summary(fun.y=mean, geom="point", 
+      stat_summary(fun.y=mean, geom="point", 
                 position=position_dodge(width=0.2), size =2, alpha=1) +
-        stat_summary(fun.y=mean, geom="line",  position=position_dodge(width=0.2)) + 
-        #geom_point()+
+      stat_summary(fun.y=mean, geom="line",  position=position_dodge(width=0.2)) + 
+      #geom_point(position=position_dodge(width=0.2))+
       
       #scale_x_continuous(name="Days", 
        #                  breaks = seq(0, 30, by=15)) +
       scale_y_continuous(name="Growth (mg / g d)", 
                        breaks = seq(-1, 2, by=0.5)) +
-    
     theme(legend.position="top",
         legend.title = element_blank(), 
-        strip.background =element_rect(fill=NA)) 
+        strip.background =element_rect(fill=NA)) +
+  facet_wrap(~TP)
 BW
 
+BW_Trea<- ggplot(Corrected_long[Corrected_long$TP!="T0", ], 
+                  aes (TP, Growth..mg.g.d., colour=factor(N_T))) +
+  Treat_fill+
+  Treat_colour+
+  #geom_point(aes(fill=N_T), shape=21, alpha=0.1)+
+  stat_summary(fun.data = "mean_cl_boot",geom = "errorbar",
+               width = 0.2, position=position_dodge(width=0.3))+
+  stat_summary(fun.y=mean, geom="point", 
+                position=position_dodge(width=0.3), size =2, alpha=1) +
+  stat_summary(fun.y=mean, geom="line",  position=position_dodge(width=0.3)) + 
+  MyTheme + facet_grid(~Genotype)
+  # scale_x_date(date_breaks = "1 week", 
+  #              date_labels = "%b/%d")+
+BW_Trea 
+
+#ggsave("Outputs/YII_Trea.svg", YII_Trea, width=4, height=3,dpi = 300)
+
 ```
+
+# Stats
+
+```{r, normality}
+
+outliers_ofav <- boxplot(Corrected_long$Growth..mg.g.d., plot=T)$out # 1 outlier
+
+# Shapiro test, p-values below 0.05 indicate violations of normality assumptions
+shapiro.test(Corrected_long$Growth..mg.g.d.)
+# normal
+```
+
+# Model selection 
+
+```{r StatsForTreattmentandTime}
+
+# Libraries
+  library(lme4)
+  library(multcomp)
+  library(multcompView)
+  library(emmeans)
+  library(effects)
+  library(lmerTest)
+
+# More complex model
+
+AW_1 <- lmer(Growth..mg.g.d. ~ TP * Nutrients * Temp +
+                             (1|Genotype/Fragment), REML=TRUE, data=Corrected_long)
+
+step(AW_1)
+
+# Final model
+AM_1 <- lmer(Growth..mg.g.d. ~ TP + Nutrients + (1 | Genotype),  data=Corrected_long)
+summary(AM_1)
+anova(AM_1)
+ranova(AM_1)
+
+layout(matrix(1:4,2,2))
+plot(AM_1)
+
+plot(Effect(c("Nutrients","TP"), AM_1), x.var="TP", multiline=T, ci.style="bars")
+
+#  Pair-wise comparisons
+BW_Emm<-cld(emmeans(AM_1, specs = c("Nutrients", "TP")))
+BW_Emm
+write.csv(BW_Emm, "Outputs/BW_Emmeans.csv")
+```
+
