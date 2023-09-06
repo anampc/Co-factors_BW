@@ -10,8 +10,8 @@ output:
     df_print: paged
     toc: yes
     toc_float: true
-#bibliography: packages.bib
-#nocite: '@*'
+bibliography: packages.bib
+nocite: '@*'
 editor_options:
   chunk_output_type: console
 ---
@@ -28,8 +28,14 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 # Libraries
   library(reshape2)
   library(tidyverse)
+# Libraries for stats
+  library(lme4)
+  library(multcomp)
+  library(multcompView)
+  library(emmeans)
+  library(effects)
+  library(lmerTest)
 
-# Graphs
 # Plots
 MyTheme<-theme_bw() +  
 theme(legend.position="top",
@@ -107,7 +113,6 @@ BW_rep<- ggplot(Corrected_long, aes (Date, Growth..mg.g.d., colour=factor(Fragme
   theme(legend.position = "none")
 BW_rep + facet_grid (Nutrients~Temp) 
 
-
 BW_rep<- ggplot(Corrected_long, aes (Mass..g., Growth..mg.g.d., 
                                      colour=factor(N_T), 
                                      shape=Colony)) +
@@ -157,7 +162,7 @@ BW_Trea<- ggplot(Corrected_long[Corrected_long$TP!="T0", ],
   #              date_labels = "%b/%d")+
 BW_Trea 
 
-#ggsave("Outputs/BW_Trea.svg", BW_Trea, width=4, height=3,dpi = 300)
+
 
 ```
 
@@ -176,37 +181,66 @@ shapiro.test(Corrected_long$Growth..mg.g.d.)
 
 ```{r StatsForTreattmentandTime}
 
-# Libraries
-  library(lme4)
-  library(multcomp)
-  library(multcompView)
-  library(emmeans)
-  library(effects)
-  library(lmerTest)
-
 # More complex model
-
 AW_1 <- lmer(Growth..mg.g.d. ~ TP * Nutrients * Temp +
                              (1|Genotype/Fragment), REML=TRUE, data=Corrected_long)
 
 step(AW_1)
+```
 
 # Final model
-AM_1 <- lmer(Growth..mg.g.d. ~ TP + Nutrients + (1 | Genotype),  data=Corrected_long)
-summary(AM_1)
+
+```{r}
+# Final model
+AM_1 <- lmer(Growth..mg.g.d. ~ Nutrients +  Temp + TP +(1 | Genotype),
+             data=Corrected_long)
+    summary(AM_1)
+    
+    layout(matrix(1:4,2,2))
+    plot(AM_1)
+    plot(Effect(c("Nutrients","TP"), AM_1), x.var="TP", multiline=T, ci.style="bars")
+```
+
+**Table S3:** Generalized linear mixed models used to test for differences in the growth rates (mg g-1 d-1) of corals exposed to temperature and nutrient treatments. Each model included nutrient and temperature as well as time point as interacting fixed effects, and coral colony as random effects.
+
+```{r}
 anova(AM_1)
 ranova(AM_1)
+```
 
-layout(matrix(1:4,2,2))
-plot(AM_1)
+**Table S4:** Estimated growth rates (mg g-1 d-1) for corals exposed to temperature and nutrient treatments. Pairwise comparisons between groups were obtained using Tukey’s HSD test (α = 0.05). Degrees of freedom are calculated with the Kenward-roger method. Confidence level used: 0.95. Non-overlapping Tukey groups denote significant differences among two given mean values. Results are averaged over the levels of Temperature.  
 
-plot(Effect(c("Nutrients","TP"), AM_1), x.var="TP", multiline=T, ci.style="bars")
 
+```{r}
 #  Pair-wise comparisons
 BW_Emm<-cld(emmeans(AM_1, specs = c("Nutrients", "TP")))
 BW_Emm
 write.csv(BW_Emm, "Outputs/BW_Emmeans.csv")
 ```
+
+
+# Final figure 
+
+```{r}
+BW_Trea<- ggplot(Corrected_long[Corrected_long$TP!="T0", ], 
+                  aes (TP, Growth..mg.g.d., colour=factor(N_T))) +
+  Treat_fill+
+  Treat_colour+
+  #geom_point(aes(fill=N_T), shape=21, alpha=0.1)+
+  stat_summary(fun.data = "mean_cl_boot",geom = "errorbar",
+               width = 0.2, position=position_dodge(width=0.3))+
+  stat_summary(fun.y=mean, geom="point", 
+                position=position_dodge(width=0.3), size =2, alpha=1) +
+  stat_summary(fun.y=mean, geom="line",  position=position_dodge(width=0.3)) + 
+  MyTheme
+  # scale_x_date(date_breaks = "1 week", 
+  #              date_labels = "%b/%d")+
+BW_Trea 
+
+#ggsave("Outputs/BW_Trea.svg", BW_Trea, width=3, height=3,dpi = 300)
+```
+
+*Figure 4b*: Text
 
 # Packages used
 
