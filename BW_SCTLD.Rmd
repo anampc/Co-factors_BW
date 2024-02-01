@@ -9,7 +9,11 @@ output:
     fig_width: 6
     df_print: paged
     toc: yes
-    toc_float: true
+    toc_float: yes
+  word_document:
+    toc: yes
+  pdf_document:
+    toc: yes
 bibliography: packages.bib
 nocite: '@*'
 editor_options:
